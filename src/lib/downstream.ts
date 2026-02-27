@@ -49,6 +49,11 @@ export async function searchFromApi(
     ) {
       return [];
     }
+
+    // 定义分辨率标识的正则表达式（支持中英文）
+    const RESOLUTION_REGEX =
+      /[0-9]+[PpKk]|4K|8K|1080|720|2160|高清|超清|蓝光|HD|FHD|UHD|BD|Blu-?Ray/i;
+
     // 处理第一页结果
     const results = data.list.map((item: ApiSearchItem) => {
       let episodes: string[] = [];
@@ -90,8 +95,14 @@ export async function searchFromApi(
       };
     });
 
+    // 过滤第一页结果：只保留标题中包含分辨率标识的结果
+    const filteredResults = results.filter((item) =>
+      RESOLUTION_REGEX.test(item.title)
+    );
+
     const config = await getConfig();
-    const MAX_SEARCH_PAGES: number = config.SiteConfig.SearchDownstreamMaxPage;
+    const MAX_SEARCH_PAGES: number =
+      config.SiteConfig.SearchDownstreamMaxPage;
 
     // 获取总页数
     const pageCount = data.pagecount || 1;
@@ -131,7 +142,8 @@ export async function searchFromApi(
             if (!pageData || !pageData.list || !Array.isArray(pageData.list))
               return [];
 
-            return pageData.list.map((item: ApiSearchItem) => {
+            // 处理本页结果并立即过滤
+            const pageResults = pageData.list.map((item: ApiSearchItem) => {
               let episodes: string[] = [];
 
               // 使用正则表达式从 vod_play_url 提取 m3u8 链接
@@ -140,11 +152,15 @@ export async function searchFromApi(
                 episodes = item.vod_play_url.match(m3u8Regex) || [];
               }
 
-              episodes = Array.from(new Set(episodes)).map((link: string) => {
-                link = link.substring(1); // 去掉开头的 $
-                const parenIndex = link.indexOf('(');
-                return parenIndex > 0 ? link.substring(0, parenIndex) : link;
-              });
+              episodes = Array.from(new Set(episodes)).map(
+                (link: string) => {
+                  link = link.substring(1); // 去掉开头的 $
+                  const parenIndex = link.indexOf('(');
+                  return parenIndex > 0
+                    ? link.substring(0, parenIndex)
+                    : link;
+                }
+              );
 
               return {
                 id: item.vod_id.toString(),
@@ -162,6 +178,11 @@ export async function searchFromApi(
                 douban_id: item.vod_douban_id,
               };
             });
+
+            // 过滤本页结果
+            return pageResults.filter((item) =>
+              RESOLUTION_REGEX.test(item.title)
+            );
           } catch (error) {
             return [];
           }
@@ -176,12 +197,12 @@ export async function searchFromApi(
       // 合并所有页的结果
       additionalResults.forEach((pageResults) => {
         if (pageResults.length > 0) {
-          results.push(...pageResults);
+          filteredResults.push(...pageResults);
         }
       });
     }
 
-    return results;
+    return filteredResults;
   } catch (error) {
     return [];
   }
@@ -241,7 +262,8 @@ export async function getDetailFromApi(
         })
         .filter(
           (url: string) =>
-            url && (url.startsWith('http://') || url.startsWith('https://'))
+            url &&
+            (url.startsWith('http://') || url.startsWith('https://'))
         );
     }
   }
@@ -249,7 +271,9 @@ export async function getDetailFromApi(
   // 如果播放源为空，则尝试从内容中解析 m3u8
   if (episodes.length === 0 && videoDetail.vod_content) {
     const matches = videoDetail.vod_content.match(M3U8_PATTERN) || [];
-    episodes = matches.map((link: string) => link.replace(/^\$/, ''));
+    episodes = matches.map((link: string) =>
+      link.replace(/^\$/, '')
+    );
   }
 
   return {
