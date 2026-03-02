@@ -69,6 +69,9 @@ for f in $(find src/app -type f \( -name "*.ts" -o -name "*.tsx" \)); do
   grep -v 'export const runtime = "edge";' "$f" > "${f}.tmp" && mv "${f}.tmp" "$f"
 done
 
+# 修复 downstream.ts 的 TypeScript 错误
+sed -i 's/filter((item) =>/filter((item: any) =>/g' src/lib/downstream.ts
+
 # 配置启动脚本和Next.js配置
 sed -i 's|/login|/|g' start.js
 cat << 'EOT' > next.config.js
