@@ -71,8 +71,8 @@ done
 # 修复 downstream.ts 的 TypeScript 错误
 sed -i 's/filter((item) =>/filter((item: any) =>/g' src/lib/downstream.ts
 
-# 修复登录页面，强制显示用户名输入框
-sed -i 's/const \[shouldAskUsername, setShouldAskUsername\] = useState(false);/const [shouldAskUsername, setShouldAskUsername] = useState(true);/' src/app/login/page.tsx
+# 修复登录页面，强制 shouldAskUsername 为 true
+sed -i 's/setShouldAskUsername(storageType && storageType !== .localstorage.);/setShouldAskUsername(true);/g' src/app/login/page.tsx
 
 # 配置启动脚本和Next.js配置
 # sed -i 's|/login|/|g' start.js
