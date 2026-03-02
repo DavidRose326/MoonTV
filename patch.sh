@@ -1,4 +1,3 @@
-cat << 'EOF' > patch.sh
 #!/bin/sh
 set -e
 
@@ -72,6 +71,9 @@ done
 # 修复 downstream.ts 的 TypeScript 错误
 sed -i 's/filter((item) =>/filter((item: any) =>/g' src/lib/downstream.ts
 
+# 修复登录页面，强制显示用户名输入框
+sed -i 's/const \[shouldAskUsername, setShouldAskUsername\] = useState(false);/const [shouldAskUsername, setShouldAskUsername] = useState(true);/' src/app/login/page.tsx
+
 # 配置启动脚本和Next.js配置
 sed -i 's|/login|/|g' start.js
 cat << 'EOT' > next.config.js
@@ -98,7 +100,3 @@ EOT
 # -----------------------------------------------------------------------------
 
 echo "✅ [Arch] V01 补丁应用成功！"
-EOF
-
-chmod +x patch.sh
-bash ./patch.sh
