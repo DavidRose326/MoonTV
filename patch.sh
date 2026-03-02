@@ -75,7 +75,7 @@ sed -i 's/filter((item) =>/filter((item: any) =>/g' src/lib/downstream.ts
 sed -i 's/const \[shouldAskUsername, setShouldAskUsername\] = useState(false);/const [shouldAskUsername, setShouldAskUsername] = useState(true);/' src/app/login/page.tsx
 
 # 配置启动脚本和Next.js配置
-sed -i 's|/login|/|g' start.js
+# sed -i 's|/login|/|g' start.js
 cat << 'EOT' > next.config.js
 module.exports = require('next-pwa')({ dest: 'public', disable: process.env.NODE_ENV === 'development', register: true, skipWaiting: true })({
   output: 'standalone',
